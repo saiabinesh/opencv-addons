@@ -27,7 +27,9 @@ master_json_dict = {"info": info__dict, "images": [], "annotations": [], "licens
 def create_annotations(category_id_list, folder_path, master_json_dict, path_binary_list_of_flags):
 	global date
 	# Writing the basic image info for each image
-	for image_number in range(400,470):
+	annotation_count =1 
+	for image_number in range(500,600):
+
 		image_temp = {
 		"id": image_number,
 		"width": 2000,
@@ -38,42 +40,46 @@ def create_annotations(category_id_list, folder_path, master_json_dict, path_bin
 		"coco_url": "none",
 		"date_captured": date,
 		}
-		master_json_dict["images"].append(image_temp)
-		annotation_count =1 
-		# For each image writing annotations of objects so that the corresponding masks can be called during the finetuning process
-		# The category id, category name, and the number of instances in each category are passed in as a list of lists as [[category_id, category name, number_of_instances],...] 
-	for i in range(0,len(category_id_list)):
-		current_category_id = category_id_list[i][0] #The first element in each list is the category id
-		current_category_name = category_id_list[i][1] #The second element is the category name
-		number_of_instances_in_category = category_id_list[i][2] #The third element is the number of instances in that category
-		for instance_number in range(1,number_of_instances_in_category+1):
-			#Reading the text file containing the binary flags of 1s and 0s and storing it into a list. The text file is of the format ex. "list_gas cylinder_5"
-			binary_flags_object_present = open(path_binary_list_of_flags+"/list_"+current_category_name+"_"+str(instance_number)+".txt").read().splitlines()
-			#Converting the elements of the list into int
-			binary_flags_object_present =  [int(item) for item in binary_flags_object_present]
-			for image_number in range(400,470):
+		list_of_annotations_current_image = []
+		for i in range(0,len(category_id_list)):
+			current_category_id = category_id_list[i][0] #The first element in each list is the category id
+			current_category_name = category_id_list[i][1] #The second element is the category name
+			number_of_instances_in_category = category_id_list[i][2] #The third element is the number of instances in that category
+			for instance_number in range(1,number_of_instances_in_category+1):
+				#Reading the text file containing the binary flags of 1s and 0s and storing it into a list. The text file is of the format ex. "list_gas cylinder_5"
+				binary_flags_object_present = open(path_binary_list_of_flags+"/list_"+current_category_name+"_"+str(instance_number)+".txt").read().splitlines()
+				#Converting the elements of the list into int
+				binary_flags_object_present =  [int(item) for item in binary_flags_object_present]
 				if binary_flags_object_present[image_number-1]: # image_number-1 since image_number is indexed from 1, and binary flags are python indexed from 0
 					annotations_temp = {
-					"id": annotation_count ,
+					"id": annotation_count,
 					"image_id": image_number,
 					"category_id": current_category_id, 
 					"segmentation": [],
 					"area": 0,
 					"bbox": [], #For now ignoring this as bounding boxes will be automatically calculated from binary masks which are provided as numpy array from binary B/W style images
 					"iscrowd": 0,
+					"instance_number": instance_number,
+					#"annotation_id":annotation_count,
 					}
 					annotation_count = annotation_count + 1
-					master_json_dict["annotations"].append(annotations_temp)
+					list_of_annotations_current_image.append(annotations_temp)
+		master_json_dict["images"].append(image_temp)
+		master_json_dict["annotations"] = [*master_json_dict["annotations"], *list_of_annotations_current_image]
+
+		# For each image writing annotations of objects so that the corresponding masks can be called during the finetuning process
+		# The category id, category name, and the number of instances in each category are passed in as a list of lists as [[category_id, category name, number_of_instances],...] 
+
 
 # print(master_json_dict["images"])
 # print(master_json_dict["annotations"])
 folder_path = "D:/AirSim/New/Images/Images_master"
 #list containing lists of [[cat_id, num_instances],..] 10 - gas cylinder, 7- train, 8 - truck
-category_id_list = [[10,"gas cylinder", 5],[7, "train", 1],[8,"truck",3]]
+category_id_list = [[10,"gas cylinder", 6],[7, "train", 1],[8,"truck",3]]
 path_binary_list_of_flags = "D:/AirSim/New/AirSim/PythonClient/computer_vision"
 create_annotations(category_id_list, folder_path, master_json_dict, path_binary_list_of_flags)
 
-file_path_for_json = "D:/AirSim/New/Images/coco/annotations/test_instances_500-530_images_train2014.json"
+file_path_for_json = "D:/AirSim/New/Images/coco/annotations/instances_train2014.json"
 with open(file_path_for_json, 'w') as data_file:
 	json.dump(master_json_dict,data_file)
 
