@@ -33,18 +33,18 @@ def check_object_present(filename,image_count,object_exists_list):
 
 #The following counter to create a set of 100 test images to check whether changing the color of objects in the middle of the code works 
 
-# This function is similar to create_truck_masks, but slightly different because all the objects have different mesh id names that are not serial number formats. 
+# This function is similar to create_truck_masks, but slightly different because all the truck objects have different mesh id names that are not serial number formats. 
 def create_object_masks(object_IDs_list, class_label, image_directory):
     object_count = 0
     for object_ID in object_IDs_list:
-        #Setting all object IDs to 0 and all the required objects(truck/train/cylinders etc. ) to a specific ID
+        #Setting all object IDs to 0 and all the gas truck tanks to a specific ID
         object_count = object_count + 1
         found = client.simSetSegmentationObjectID("[\w]*", 0, True);
         print("Set everything to 0 color code: %r" % (found))
-        
-        found = client.simSetSegmentationObjectID(object_ID, 2, True); #Setting object ID to color 2 and everything else to color 0
+        ################################################################################################################
+        ##################################### Change object ID below ###################################################
+        found = client.simSetSegmentationObjectID(object_ID, 2, True);
         print("Setting color for "+str(object_ID)+": "+str(found))
-
         i =1 #resetting i, the image count, before moving on to the next instance of the object
         object_exists_list = [] #initializing a list that can hold whether a truck exists in each of these images
         for z in np.linspace(-30,-100,10):
@@ -53,35 +53,30 @@ def create_object_masks(object_IDs_list, class_label, image_directory):
                     global filename
                     client.simSetVehiclePose(airsim.Pose(airsim.Vector3r(x,y,z), airsim.to_quaternion(0,0,0)), True)
                     #print(client.simGetCameraInfo("0"))
-                    # print("Taking image")
-                    
+                    responses = client.simGetImages([
+                    #    airsim.ImageRequest("0", airsim.ImageType.Segmentation, True), #depth in perspective projection
+                    #    airsim.ImageRequest("0", airsim.ImageType.Segmentation, False, False)])  #scene vision image in uncompressed RGBA array
+                    #airsim.ImageRequest("3", airsim.ImageType.Scene, False, False),
+                    airsim.ImageRequest("3", airsim.ImageType.Segmentation, False, False)])
                     #print('Retrieved images: %d', len(responses))
                     #save segmentation images in various formats
-                    full_filename = str(image_directory)+'/image_'+str(i)+'_'+str(class_label)+'_'+str(object_count)+'.png'
-                    if not (os.path.isfile(full_filename)):
-                        responses = client.simGetImages([
-                        #    airsim.ImageRequest("0", airsim.ImageType.Segmentation, True), #depth in perspective projection
-                        #    airsim.ImageRequest("0", airsim.ImageType.Segmentation, False, False)])  #scene vision image in uncompressed RGBA array
-                        #airsim.ImageRequest("3", airsim.ImageType.Scene, False, False),
-              
-                        airsim.ImageRequest("3", airsim.ImageType.Segmentation, False, False)])
-                        for idx, response in enumerate(responses):
-                            global filename
-                            #################################################################################################
-                            ############# Image directory passed in through the function above ##############################
-                            filename = str(image_directory)+'/image_'+str(i)+'_'+str(class_label)+'_'+str(object_count)
-                            if response.pixels_as_float:
-                                #print("Type %d, size %d" % (response.image_type, len(response.image_data_float)))
-                                airsim.write_pfm(os.path.normpath(filename + '.pfm'), airsim.get_pfm_array(response))
-                            elif response.compress: #png format
-                                #print("Type %d, size %d" % (response.image_type, len(response.image_data_uint8)))
-                                airsim.write_file(os.path.normpath(filename + '.png'), response.image_data_uint8)
-                            else: #uncompressed array - numpy demo
-                                #print("Type %d, size %d" % (response.image_type, len(response.image_data_uint8)))
-                                img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) #get numpy array
-                                img_rgba = img1d.reshape(response.height, response.width, 4) #reshape array to 4 channel image array H X W X 4
-                                img_rgba = np.flipud(img_rgba) #original image is flipped vertically
-                                airsim.write_png(os.path.normpath(filename + '.png'), img_rgba) #write to jpg
+                    for idx, response in enumerate(responses):
+                        global filename
+                        #################################################################################################
+                        ############################ Image directory here ###############################################
+                        filename = str(image_directory)+'/image_'+str(i)+'_'+str(class_label)+'_'+str(object_count)
+                        if response.pixels_as_float:
+                            #print("Type %d, size %d" % (response.image_type, len(response.image_data_float)))
+                            airsim.write_pfm(os.path.normpath(filename + '.pfm'), airsim.get_pfm_array(response))
+                        elif response.compress: #png format
+                            #print("Type %d, size %d" % (response.image_type, len(response.image_data_uint8)))
+                            airsim.write_file(os.path.normpath(filename + '.png'), response.image_data_uint8)
+                        else: #uncompressed array - numpy demo
+                            #print("Type %d, size %d" % (response.image_type, len(response.image_data_uint8)))
+                            img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) #get numpy array
+                            img_rgba = img1d.reshape(response.height, response.width, 4) #reshape array to 4 channel image array H X W X 4
+                            img_rgba = np.flipud(img_rgba) #original image is flipped vertically
+                            airsim.write_png(os.path.normpath(filename + '.png'), img_rgba) #write to jpg
                     object_exists_list = check_object_present(filename, i,object_exists_list)
                     if i%50 == 0:
                         print("Image count = ", i)
@@ -92,23 +87,19 @@ def create_object_masks(object_IDs_list, class_label, image_directory):
         buffsize=1
         file = open(text_filename,"a+",buffsize)
         print("Object count: ",object_count )
-        # print(object_exists_list)
+        print(object_exists_list)
         for item in object_exists_list:
             file.write("%s\n" % item) 
 
- 
-#Arbitrary function that checks whether the required object is found within the given set of images and creates binary flags to store that information in a text file. 
-
+        
 #Checking the number of contours in a few files before actually deciding the criteria for deleting empty images
 #delete_empty_images("D:/AirSim/New/Images/Test_images_contour_detection")
 
-###################################################### Timing and calling the actual create_masks function with the required arguments #######################################
 start_time = time.time()
 # The list of object IDs to be passed into the create_masks function
-# truck_object_IDs_list = ["FbxScene_PickupTruck_C_0", "FbxScene_JCB2_3989", "KamazNov2_3"]
-# train_object_list = ["train"]
-
+#truck_object_IDs_list = ["FbxScene_PickupTruck_C_0", "FbxScene_JCB2_3989", "KamazNov2_3"]
 gas_object_list = ["Propane_Tank_E_Blueprint8","Propane_Tank_E_Blueprint9","Propane_Tank_E_Blueprint10_2","Propane_Tank_E_Blueprint11", "Propane_Tank_E_Blueprint12", "Propane_Tank_E_Blueprint13"]
+
 current_class_label = "gas cylinder"
 current_image_directory = "D:/AirSim/New/Images/Images_master"
 ############################ Calling the create_masks function for truck objects ##############################
