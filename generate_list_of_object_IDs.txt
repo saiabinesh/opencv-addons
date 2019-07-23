@@ -1,0 +1,3 @@
+
+for item in object_exists_list:
+	file.write("%s\n" % item) 

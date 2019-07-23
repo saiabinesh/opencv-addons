@@ -12,15 +12,15 @@ seed = 30
 
 #master_json_dict = {} #The final dictionary that will be dumped into the json
 info__dict = {
-"year": 2018,
+"year": 2019,
 "version": 1,
-"description": "Coco style dataset with just train class generated from RCS Image dataset 10.5281/zenodo.1403708",
+"description": "Coco style dataset with five classes for object detection test in Malaga",
 "contributor": "Sai Abinesh",
 "url": "10.5281/zenodo.1403708",
 "date_created": date,
 }
 #Changing id 10 from traffic light to gas cylinder
-categories_list =  [{"supercategory": "vehicle", "id": 1, "name": "train"}, {"supercategory": "vehicle", "id": 2, "name": "truck"}, {"supercategory": "outdoor", "id": 3, "name": "gas cylinder"},{"supercategory": "outdoor", "id": 4, "name": "house"},{"supercategory": "person", "id": 5, "name": "person"}]
+categories_list =  [{"supercategory": "animal", "id": 1, "name": "dead_animal"}, {"supercategory": "animal", "id": 2, "name": "dead_bird"}, {"supercategory": "outdoor", "id": 3, "name": "gas cylinder"},{"supercategory": "accessory", "id": 4, "name": "suitcase"},{"supercategory": "accessory", "id": 5, "name": "backpack"}]
 
 licenses_list = [{"url": "http:\/\/creativecommons.org\/licenses\/by-nc-sa\/2.0\/", "id": 1, "name": "Attribution-NonCommercial-ShareAlike License"}, {"url": "http:\/\/creativecommons.org\/licenses\/by-nc\/2.0\/", "id": 2, "name": "Attribution-NonCommercial License"}, {"url": "http:\/\/creativecommons.org\/licenses\/by-nc-nd\/2.0\/", "id": 3, "name": "Attribution-NonCommercial-NoDerivs License"}, {"url": "http:\/\/creativecommons.org\/licenses\/by\/2.0\/", "id": 4, "name": "Attribution License"}, {"url": "http:\/\/creativecommons.org\/licenses\/by-sa\/2.0\/", "id": 5, "name": "Attribution-ShareAlike License"}, {"url": "http:\/\/creativecommons.org\/licenses\/by-nd\/2.0\/", "id": 6, "name": "Attribution-NoDerivs License"}, {"url": "http:\/\/flickr.com\/commons\/usage\/", "id": 7, "name": "No known copyright restrictions"}, {"url": "http:\/\/www.usa.gov\/copyright.shtml", "id": 8, "name": "United States Government Work"}]
 
@@ -35,6 +35,7 @@ def create_annotations(category_id_list, folder_path, master_json_dict, path_bin
 	global date
 	# Writing the basic image info for each image
 	annotation_count =1 
+	image_count =1 
 	for image_number in list_of_image_numbers:
 
 		image_temp = {
@@ -76,15 +77,18 @@ def create_annotations(category_id_list, folder_path, master_json_dict, path_bin
 
 		# For each image writing annotations of objects so that the corresponding masks can be called during the finetuning process
 		# The category id, category name, and the number of instances in each category are passed in as a list of lists as [[category_id, category name, number_of_instances],...] 
+		image_count = image_count+1
+		if (image_count%50)==0:
+			print("Images done: ",image_count)
 	with open(file_path_for_json, 'w') as data_file:
 		json.dump(master_json_dict,data_file)
 
+random.seed(seed)
+validation_set = random.sample(range(1,401),40)
+training_set = [i for i in range(1,401) if i not in validation_set]
+folder_path = "/ichec/home/users/saiabinesh/experiments/maskrcnn/images/Images_master_v2/Images_master_v2"
 
-validation_set = random.sample(range(100,999),100)
-training_set = [i for i in range(100,999) if i not in validation_set]
-folder_path = "/ichec/home/users/saiabinesh/experiments/maskrcnn/images/Images_master"
-#list containing lists of [[cat_id, num_instances],..] 10 - gas cylinder, 7- train, 8 - truck
-category_id_list = [[3,"gas cylinder", 6],[1, "train", 1],[2,"truck",3],[4,"house",3],[5,"person",1]]
+category_id_list = [[1,"dead_animal", 30],[2, "dead_bird", 30],[3,"gas cylinder",57],[4,"suitcase",67],[5,"backpack",116]]
 path_binary_list_of_flags = "D:/AirSim/New/AirSim/PythonClient/computer_vision"
 train_path = "D:/instances_train2014.json"
 
