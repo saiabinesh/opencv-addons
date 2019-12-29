@@ -1,8 +1,5 @@
 # In settings.json first activate computer vision mode: 
 # https://github.com/Microsoft/AirSim/blob/master/docs/image_apis.md#computer-vision-mode
-# Working on the newer environement with new houses, cars and river (extended by Sean). 
-# changed image folder in line 39. Commenting out 
-
 
 import setup_path 
 import airsim
@@ -13,24 +10,19 @@ import numpy as np
 client = airsim.VehicleClient()
 client.confirmConnection()
 
-# below code didn't work beacause currently in computerVision mode
-# client.moveToPositionAsync(273, -7167, 1036, 10, 0).join() # , DrivetrainType.ForwardOnly, YawMode(False,0), 20, 1) 
-
-#Change the code below to move the camera to desired position
-i =1 #starting from 400 as already 400 images captured
-#Changing coordinates for new environment images
-#for z in np.linspace(-10,-50,4):
-for z in [-10]:
-	# for x in np.linspace(-63.3,86.7, 36):
-		# for y in np.linspace(-60,-240,25):
-	for x in [11.80]:
-		for y in [-83.30]:
-
+i =1 
+# for z in np.linspace(-6,-50,2):
+for z in [-6]:
+	# for x in np.linspace(75,105,5):
+	for x in [40]:
+		# for y in np.linspace(0,60,5):
+		for y in [170]:
 			client.simSetVehiclePose(airsim.Pose(airsim.Vector3r(x,y,z), airsim.to_quaternion(0,0,0)), True)
 			#print(client.simGetCameraInfo("0"))
 			responses = client.simGetImages([
 			#    airsim.ImageRequest("0", airsim.ImageType.Segmentation, True), #depth in perspective projection
 			#    airsim.ImageRequest("0", airsim.ImageType.Segmentation, False, False)])  #scene vision image in uncompressed RGBA array
+			# airsim.ImageRequest("0", airsim.ImageType.Scene, False, False),airsim.ImageRequest("1", airsim.ImageType.Scene, False, False),airsim.ImageRequest("2", airsim.ImageType.Scene, False, False), airsim.ImageRequest("4", airsim.ImageType.Scene, False, False),
 			airsim.ImageRequest("3", airsim.ImageType.Scene, False, False)])
 			# airsim.ImageRequest("3", airsim.ImageType.Segmentation, False, False)])
 			#print('Retrieved images: %d', len(responses))
@@ -49,15 +41,17 @@ for z in [-10]:
 			        img_rgba = img1d.reshape(response.height, response.width, 4) #reshape array to 4 channel image array H X W X 4
 			        img_rgba = np.flipud(img_rgba) #original image is flipped vertically
 			        airsim.write_png(os.path.normpath(filename + '.png'), img_rgba) #write to png 
-			    if i%10 == 0:
+			    if i%2 == 0:
 			        print("Image count = ", i)
-			    # if i>= 45:
-			        # exit()
-
+			        print(type(x),type(y), type(z))
 			    i = i +1
 
-# #        #find unique colors
-# #        print(np.unique(img_rgba[:,:,0], return_counts=True)) #red
-# #        print(np.unique(img_rgba[:,:,1], return_counts=True)) #green
-# #        print(np.unique(img_rgba[:,:,2], return_counts=True)) #blue  
-# #        print(np.unique(img_rgba[:,:,3], return_counts=True)) #blue
+
+
+
+
+
+
+
+
+

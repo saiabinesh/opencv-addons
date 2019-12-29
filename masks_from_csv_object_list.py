@@ -37,6 +37,8 @@ def check_object_present(filename,image_count,object_exists_list):
 
 	#Extracting the coorindates of the biggest enclosing rectangle
 	if len(contours)>1:
+		if len(contours)>2:
+			print("contour length =",len(contours))
 		object_exists_list.append(1)
 	else:
 		object_exists_list.append(0)
@@ -60,9 +62,11 @@ def create_object_masks(object_IDs_list, class_label, image_directory):
         ##################################### Change object ID below ###################################################
         found = client.simSetSegmentationObjectID(object_ID, 2, True);
         print("Setting color for "+str(object_ID)+": "+str(found))
-        i =1 #resetting i, the image count, before moving on to the next instance of the object
+        #starting from 401 instead of 1 to append image names after 400
+        i =401 #resetting i, the image count, before moving on to the next instance of the object
         object_exists_list = [] #initializing a list that can hold whether a truck exists in each of these images
-        for z in np.linspace(-10,-50,4):
+        #for z in np.linspace(-10,-50,4):
+        for z in [-5]:
             for x in np.linspace(-150,0, 10):
                 for y in np.linspace(-60,-240,10):
                     global filename
